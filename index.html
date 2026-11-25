@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e3a8a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Emissor de Recibos em PDF e Gestão de Pacientes para Luciana Alonso Fernandes">
+  <title>Recibos Luciana</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="stylesheet" href="css/app.css">
+  
+  <!-- Biblioteca jsPDF Offline -->
+  <script src="js/lib/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- CABEÇALHO DO APLICATIVO -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="header-title-box">
+          <h1>Recibos Luciana</h1>
+          <p>Fonoaudiologia Domiciliar • CRFa 1-14891</p>
+        </div>
+        <div class="header-badge">
+          <span>📱</span> PWA
+        </div>
+      </div>
+    </header>
+
+    <!-- 1. ABA: EMITIR RECIBO -->
+    <main id="emitir-view" class="tab-view active">
+      <div class="card">
+        <div class="card-title">🧾 Novo Recibo em PDF</div>
+
+        <div class="form-group">
+          <label for="recibo-paciente">Paciente</label>
+          <select id="recibo-paciente" class="form-select"></select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="recibo-valor">Valor Total (R$)</label>
+            <input type="number" id="recibo-valor" class="form-control" placeholder="1000.00" step="10" min="0">
+            <div id="recibo-extenso-preview" class="extenso-preview"></div>
+          </div>
+          <div class="form-group">
+            <label for="recibo-sessoes">Qtd. Sessões</label>
+            <input type="number" id="recibo-sessoes" class="form-control" value="4" min="1" max="50">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="recibo-mes">Mês de Referência</label>
+            <select id="recibo-mes" class="form-select"></select>
+          </div>
+          <div class="form-group">
+            <label for="recibo-ano">Ano</label>
+            <input type="number" id="recibo-ano" class="form-control" value="2026">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="recibo-tipo-periodo">Tipo de Período</label>
+          <select id="recibo-tipo-periodo" class="form-select">
+            <option value="mes_completo">Mês completo ("durante o mês de...")</option>
+            <option value="dia_especifico">Dia específico ("realizados no dia...")</option>
+          </select>
+        </div>
+
+        <div id="box-data-especifica" class="form-group" style="display: none;">
+          <label for="recibo-data-especifica">Texto do Dia Específico</label>
+          <input type="text" id="recibo-data-especifica" class="form-control" placeholder="Ex: 24 de Outubro de 2026">
+        </div>
+
+        <div class="form-group">
+          <label for="recibo-data-emissao">Data de Emissão (Recibo)</label>
+          <input type="date" id="recibo-data-emissao" class="form-control">
+        </div>
+
+        <!-- PRÉVIA EM TEMPO REAL NO MODELO -->
+        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">
+          Prévia Fiel do Documento
+        </label>
+        <div id="live-preview-box" class="preview-box"></div>
+
+        <div class="btn-group-grid">
+          <button id="btn-preview-pdf" class="btn btn-outline" type="button">
+            🔍 Visualizar PDF
+          </button>
+          <button id="btn-gerar-recibo" class="btn btn-primary" type="button">
+            💾 Salvar Recibo
+          </button>
+        </div>
+
+        <button id="btn-share-wpp" class="btn btn-success" type="button" style="margin-top: 10px;">
+          💬 Enviar no WhatsApp
+        </button>
+
+        <!-- CAIXA PÓS-EMISSÃO -->
+        <div id="pos-emissao-box" class="card" style="display: none; margin-top: 15px; background: #f0fdf4; border-color: #bbf7d0;">
+          <div style="color: #15803d; font-weight: bold; margin-bottom: 8px;">✅ Recibo salvo no histórico!</div>
+          <div class="btn-group-grid" style="margin-top: 5px;">
+            <button id="btn-pos-pdf" class="btn btn-primary" type="button">📄 Abrir PDF</button>
+            <button id="btn-pos-wpp" class="btn btn-success" type="button">💬 Enviar WhatsApp</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 2. ABA: PACIENTES -->
+    <main id="pacientes-view" class="tab-view">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div class="card-title" style="margin: 0;">👥 Pacientes</div>
+          <button id="btn-novo-paciente" class="btn btn-primary" style="width: auto; padding: 8px 14px; font-size: 0.85rem;">
+            + Novo Paciente
+          </button>
+        </div>
+        <input type="text" id="busca-paciente" class="form-control" placeholder="Buscar por nome ou CPF..." style="margin-bottom: 12px;">
+        <div id="lista-pacientes"></div>
+      </div>
+    </main>
+
+    <!-- 3. ABA: HISTÓRICO -->
+    <main id="historico-view" class="tab-view">
+      <div class="card">
+        <div class="card-title">📁 Histórico de Recibos Emitidos</div>
+        <input type="text" id="busca-historico" class="form-control" placeholder="Buscar por paciente, mês ou CPF..." style="margin-bottom: 12px;">
+        <div id="lista-historico"></div>
+      </div>
+    </main>
+
+    <!-- 4. ABA: RELATÓRIOS -->
+    <main id="relatorios-view" class="tab-view">
+      <div class="card">
+        <div class="card-title">📊 Relatórios & Declarações (IRPF)</div>
+        
+        <div class="form-group">
+          <label for="relatorio-paciente">Filtrar por Paciente</label>
+          <select id="relatorio-paciente" class="form-select"></select>
+        </div>
+
+        <div class="form-group">
+          <label for="relatorio-ano">Ano de Referência</label>
+          <select id="relatorio-ano" class="form-select"></select>
+        </div>
+
+        <button id="btn-relatorio-pdf" class="btn btn-primary" type="button" style="display: none; margin-bottom: 16px;">
+          📄 Gerar Declaração Anual em PDF
+        </button>
+
+        <div id="resultado-relatorio"></div>
+      </div>
+    </main>
+
+    <!-- 5. ABA: CONFIGURAÇÕES -->
+    <main id="config-view" class="tab-view">
+      <div class="card">
+        <div class="card-title">⚙️ Dados do Emitente</div>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+          Estes dados aparecem automaticamente no cabeçalho e rodapé dos recibos gerados.
+        </p>
+
+        <div class="form-group">
+          <label for="cfg-nome">Nome Completo</label>
+          <input type="text" id="cfg-nome" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-registro">Profissão e Registro do Conselho</label>
+          <input type="text" id="cfg-registro" class="form-control" placeholder="Fonoaudióloga CRFa 1-14891 1a Região">
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-cpf">CPF do Profissional</label>
+          <input type="text" id="cfg-cpf" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-cidade">Cidade / Local</label>
+          <input type="text" id="cfg-cidade" class="form-control" placeholder="Rio de Janeiro">
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-servico">Descrição Padrão do Serviço</label>
+          <textarea id="cfg-servico" class="form-control" rows="3"></textarea>
+        </div>
+
+        <button id="btn-salvar-config" class="btn btn-primary" type="button">
+          Salvar Dados do Emitente
+        </button>
+      </div>
+    </main>
+
+    <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="emitir-view">
+        <span class="icon">🧾</span>
+        <span>Recibo</span>
+      </button>
+      <button class="nav-item" data-tab="pacientes-view">
+        <span class="icon">👥</span>
+        <span>Pacientes</span>
+      </button>
+      <button class="nav-item" data-tab="historico-view">
+        <span class="icon">📁</span>
+        <span>Histórico</span>
+      </button>
+      <button class="nav-item" data-tab="relatorios-view">
+        <span class="icon">📊</span>
+        <span>Relatórios</span>
+      </button>
+      <button class="nav-item" data-tab="config-view">
+        <span class="icon">⚙️</span>
+        <span>Ajustes</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MODAL: CADASTRAR/EDITAR PACIENTE -->
+  <div id="modal-paciente" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-paciente-titulo">Novo Paciente</h2>
+        <button id="btn-fechar-modal-paciente" class="close-modal">&times;</button>
+      </div>
+      <input type="hidden" id="paciente-id">
+      <div class="form-group">
+        <label for="paciente-nome">Nome Completo</label>
+        <input type="text" id="paciente-nome" class="form-control" placeholder="Ex: Maria da Silva" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="paciente-cpf">CPF</label>
+        <input type="text" id="paciente-cpf" class="form-control" placeholder="000.000.000-00" maxlength="14" inputmode="numeric">
+      </div>
+      <button id="btn-salvar-paciente" class="btn btn-primary" type="button" style="margin-top: 10px;">
+        Salvar Paciente
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICAÇÃO -->
+  <div id="toast">Mensagem</div>
+
+  <!-- SCRIPT PRINCIPAL DO APP -->
+  <script src="js/bundle.js" charset="UTF-8"></script>
+</body>
+</html>

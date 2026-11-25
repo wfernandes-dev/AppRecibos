@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="110" fill="url(#grad)" />
+  
+  <!-- Receipt Paper Document -->
+  <g filter="url(#shadow)">
+    <path d="M140 100 C140 88 150 78 162 78 L350 78 C362 78 372 88 372 100 L372 405 L340 385 L308 405 L276 385 L244 405 L212 385 L180 405 L148 385 L140 395 Z" fill="#ffffff" />
+    <!-- Header lines -->
+    <rect x="180" y="130" width="152" height="14" rx="7" fill="#1e3a8a" />
+    <rect x="210" y="158" width="92" height="8" rx="4" fill="#94a3b8" />
+    
+    <!-- Big R$ Badge -->
+    <rect x="175" y="195" width="162" height="42" rx="8" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2" />
+    <text x="256" y="225" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="#1e3a8a" text-anchor="middle">RECIBO R$</text>
+    
+    <!-- Body text placeholder lines -->
+    <rect x="175" y="260" width="162" height="8" rx="4" fill="#cbd5e1" />
+    <rect x="175" y="278" width="162" height="8" rx="4" fill="#cbd5e1" />
+    <rect x="175" y="296" width="110" height="8" rx="4" fill="#cbd5e1" />
+    
+    <!-- Signature Line -->
+    <line x1="175" y1="340" x2="337" y2="340" stroke="#64748b" stroke-width="2" stroke-dasharray="3,3" />
+    <text x="256" y="356" font-family="Georgia, serif" font-style="italic" font-size="12" fill="#475569" text-anchor="middle">Luciana A. Fernandes</text>
+  </g>
+</svg>
